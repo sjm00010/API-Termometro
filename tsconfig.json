@@ -3,5 +3,8 @@
     "strict": true,
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
+    "target": "ES2015",
+    "outDir": "./dist",
+    "module": "ES2015",
   }
 }
