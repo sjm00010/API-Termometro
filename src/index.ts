@@ -1,8 +1,9 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { bearerAuth } from "hono/bearer-auth";
 import { MongoClient, ServerApiVersion } from "mongodb";
 import { config } from "dotenv";
-import { bearerAuth } from "hono/bearer-auth";
 
 config();
 
@@ -84,6 +85,7 @@ function secondsToDate(seconds: number): Date {
 const app = new Hono();
 
 app.use("*", bearerAuth({ token: process.env.API_KEY ?? "TOKEN" }));
+app.use("*", cors());
 
 app.post("/sensor", async (c) => {
 	c.status(400);
