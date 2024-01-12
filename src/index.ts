@@ -84,28 +84,31 @@ function secondsToDate(seconds: number): Date {
 
 const app = new Hono();
 
-app.use("*", bearerAuth({ token: process.env.API_KEY ?? "TOKEN" }));
 app.use("*", cors());
 
-app.post("/sensor", async (c) => {
-	c.status(400);
-	try {
-		const data = await c.req.json();
-		if (data.measure) {
-			if (await save(data.measure)) {
-				c.status(202);
-				return c.json({ message: `Saved: ${data.measure}` });
-			}
+app.post(
+	"/sensor",
+	bearerAuth({ token: process.env.API_WRITE ?? "TOKEN" }),
+	async (c) => {
+		c.status(400);
+		try {
+			const data = await c.req.json();
+			if (data.measure) {
+				if (await save(data.measure)) {
+					c.status(202);
+					return c.json({ message: `Saved: ${data.measure}` });
+				}
 
-			c.status(500);
-			return c.json({ message: "Failed to saved data" });
+				c.status(500);
+				return c.json({ message: "Failed to saved data" });
+			}
+			return c.json({ message: "Please send a valid JSON" });
+		} catch (e) {
+			const error = e as Error;
+			return c.json({ message: `Error not expected: ${error.message}` });
 		}
-		return c.json({ message: "Please send a valid JSON" });
-	} catch (e) {
-		const error = e as Error;
-		return c.json({ message: `Error not expected: ${error.message}` });
-	}
-});
+	},
+);
 
 app.get("/read/:value/:scale", async (c) => {
 	c.status(400);
@@ -143,20 +146,24 @@ app.get("/read/:value/:scale", async (c) => {
 	}
 });
 
-app.delete("/measures", async (c) => {
-	c.status(400);
-	try {
-		if (await deleteAll()) {
-			c.status(200);
-			return c.json({ message: "Deleted" });
+app.delete(
+	"/measures",
+	bearerAuth({ token: process.env.API_DELETE ?? "TOKEN" }),
+	async (c) => {
+		c.status(400);
+		try {
+			if (await deleteAll()) {
+				c.status(200);
+				return c.json({ message: "Deleted" });
+			}
+			c.status(500);
+			return c.json({ message: "Failed to delete data" });
+		} catch (e) {
+			const error = e as Error;
+			return c.json({ message: `Error not expected: ${error.message}` });
 		}
-		c.status(500);
-		return c.json({ message: "Failed to delete data" });
-	} catch (e) {
-		const error = e as Error;
-		return c.json({ message: `Error not expected: ${error.message}` });
-	}
-});
+	},
+);
 
 const port = parseInt(process.env.PORT ?? "8080");
 console.log(`Server is running on port ${port}`);
