@@ -30,6 +30,7 @@ const client = new MongoClient(uri, {
 		strict: true,
 		deprecationErrors: true,
 	},
+	minPoolSize: 5,
 });
 
 async function save(measure: string): Promise<boolean> {
