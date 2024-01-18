@@ -175,6 +175,10 @@ app.delete("/measures", bearerAuth({ token: token_delete }), async (c) => {
 	}
 });
 
+app.get("/", async (c) => {
+	return c.text("----- API WORKING -----");
+});
+
 const port = parseInt(process.env.PORT ?? "8080");
 console.log(`Server is running on port ${port}`);
 
