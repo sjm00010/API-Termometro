@@ -10,10 +10,17 @@ config();
 const uri = process.env.MONGO_CS ?? "";
 const database = process.env.DB ?? "";
 const collection = process.env.COLLECTION ?? "";
+const token_write = process.env.API_WRITE ?? "";
+const token_delete = process.env.API_DELETE ?? "";
 
 if (!uri || !database || !collection)
 	throw new Error(
-		"Please define the MONGO_CS environment variable inside .env",
+		"Please define the MONGO_CS environment variable inside .env file",
+	);
+
+if (!token_write || !token_delete)
+	throw new Error(
+		"Please define the API KEYs environment variable inside .env file",
 	);
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -84,31 +91,33 @@ function secondsToDate(seconds: number): Date {
 
 const app = new Hono();
 
-app.use("*", cors());
-
-app.post(
-	"/sensor",
-	bearerAuth({ token: process.env.API_WRITE ?? "TOKEN" }),
-	async (c) => {
-		c.status(400);
-		try {
-			const data = await c.req.json();
-			if (data.measure) {
-				if (await save(data.measure)) {
-					c.status(202);
-					return c.json({ message: `Saved: ${data.measure}` });
-				}
-
-				c.status(500);
-				return c.json({ message: "Failed to saved data" });
-			}
-			return c.json({ message: "Please send a valid JSON" });
-		} catch (e) {
-			const error = e as Error;
-			return c.json({ message: `Error not expected: ${error.message}` });
-		}
-	},
+app.use(
+	"*",
+	cors({
+		origin: ["http://localhost:4321", "https://sjm00010.github.io"],
+		allowMethods: ["POST", "GET", "DELETE", "OPTIONS"],
+	}),
 );
+
+app.post("/sensor", bearerAuth({ token: token_write }), async (c) => {
+	c.status(400);
+	try {
+		const data = await c.req.json();
+		if (data.measure) {
+			if (await save(data.measure)) {
+				c.status(202);
+				return c.json({ message: `Saved: ${data.measure}` });
+			}
+
+			c.status(500);
+			return c.json({ message: "Failed to saved data" });
+		}
+		return c.json({ message: "Please send a valid JSON" });
+	} catch (e) {
+		const error = e as Error;
+		return c.json({ message: `Error not expected: ${error.message}` });
+	}
+});
 
 app.get("/read/:value/:scale", async (c) => {
 	c.status(400);
@@ -131,7 +140,7 @@ app.get("/read/:value/:scale", async (c) => {
 			case "secs":
 				seconds = value;
 				break;
-			default: // Minutes
+			default:
 				c.status(400);
 				return c.json({ message: "Not implemented" });
 		}
@@ -146,24 +155,20 @@ app.get("/read/:value/:scale", async (c) => {
 	}
 });
 
-app.delete(
-	"/measures",
-	bearerAuth({ token: process.env.API_DELETE ?? "TOKEN" }),
-	async (c) => {
-		c.status(400);
-		try {
-			if (await deleteAll()) {
-				c.status(200);
-				return c.json({ message: "Deleted" });
-			}
-			c.status(500);
-			return c.json({ message: "Failed to delete data" });
-		} catch (e) {
-			const error = e as Error;
-			return c.json({ message: `Error not expected: ${error.message}` });
+app.delete("/measures", bearerAuth({ token: token_delete }), async (c) => {
+	c.status(400);
+	try {
+		if (await deleteAll()) {
+			c.status(200);
+			return c.json({ message: "Deleted" });
 		}
-	},
-);
+		c.status(500);
+		return c.json({ message: "Failed to delete data" });
+	} catch (e) {
+		const error = e as Error;
+		return c.json({ message: `Error not expected: ${error.message}` });
+	}
+});
 
 const port = parseInt(process.env.PORT ?? "8080");
 console.log(`Server is running on port ${port}`);
