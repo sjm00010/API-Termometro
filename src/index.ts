@@ -98,6 +98,7 @@ app.use(
 		origin: [
 			"http://localho.st:4321",
 			"https://sjm00010.github.io",
+			"http://86.127.226.67", // Mi IP para la placa ESP32
 			"https://86.127.226.67", // Mi IP para la placa ESP32
 		],
 		allowMethods: ["POST", "GET", "DELETE", "OPTIONS"],
