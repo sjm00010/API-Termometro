@@ -95,7 +95,11 @@ const app = new Hono();
 app.use(
 	"*",
 	cors({
-		origin: ["http://localho.st:4321", "https://sjm00010.github.io"],
+		origin: [
+			"http://localho.st:4321",
+			"https://sjm00010.github.io",
+			"https://86.127.226.67", // Mi IP para la placa ESP32
+		],
 		allowMethods: ["POST", "GET", "DELETE", "OPTIONS"],
 	}),
 );
